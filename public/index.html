@@ -458,29 +458,29 @@ function renderBlast(){
     lines.push(label);
     lines.push(pad60('-'));
 
-    // Header
+    // Header — columns wide enough to never truncate
     lines.push(
-      col('BOND',20)+
+      col('BOND',22)+
       col('CUSIP',12)+
-      col('SIZE',10)+
+      col('SIZE',16)+
       col('COUPON',9)+
       col('SPREAD',9)+
-      col('OFFER PX',11)+
+      col('OFFER PX',12)+
       col('WAL',7)+
       col('YIELD',9)+
       'STRUCTURE / NOTES'
     );
-    lines.push(col('-',20)+col('-',12)+col('-',10)+col('-',9)+col('-',9)+col('-',11)+col('-',7)+col('-',9)+'-'.repeat(20));
+    lines.push(dashes(22)+dashes(12)+dashes(16)+dashes(9)+dashes(9)+dashes(12)+dashes(7)+dashes(9)+dashes(20));
 
     groups[p].forEach(function(o){
-      // Use values exactly as parsed — no reformatting
+      // Raw values exactly as parsed — zero reformatting
       lines.push(
-        col(o.name||'',20)+
+        col(o.name||'',22)+
         col(o.cusip||'',12)+
-        col(o.size||'',10)+
+        col(o.size||'',16)+
         col(o.coupon||'',9)+
         col(o.spread||'',9)+
-        col(o.price||'',11)+
+        col(o.price||'',12)+
         col(o.wal||'',7)+
         col(o.yield||'',9)+
         [o.structure,o.maturity,o.notes].filter(Boolean).join(' | ')
@@ -527,8 +527,11 @@ function copyBlast(){
 
 function col(s,w){
   s = (s||'').toString();
-  return s.length>=w ? s.substring(0,w-1)+' ' : s+Array(w-s.length).join(' ');
+  // Never truncate — pad to width, or add one space if longer
+  if(s.length >= w) return s + ' ';
+  return s + Array(w - s.length + 1).join(' ');
 }
+function dashes(w){ return Array(w+1).join('-'); }
 function pad60(c){ return Array(61).join(c); }
 function escText(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
