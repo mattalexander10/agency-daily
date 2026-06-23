@@ -460,28 +460,30 @@ function renderBlast(){
 
     // Header
     lines.push(
-      col('BOND',18)+
+      col('BOND',20)+
       col('CUSIP',12)+
-      col('SIZE',9)+
-      col('COUPON',8)+
-      col('SPREAD',8)+
-      col('OFFER PX',10)+
-      col('WAL',6)+
-      col('YIELD',7)+
-      'NOTES'
+      col('SIZE',10)+
+      col('COUPON',9)+
+      col('SPREAD',9)+
+      col('OFFER PX',11)+
+      col('WAL',7)+
+      col('YIELD',9)+
+      'STRUCTURE / NOTES'
     );
+    lines.push(col('-',20)+col('-',12)+col('-',10)+col('-',9)+col('-',9)+col('-',11)+col('-',7)+col('-',9)+'-'.repeat(20));
 
     groups[p].forEach(function(o){
+      // Use values exactly as parsed — no reformatting
       lines.push(
-        col(o.name||'',18)+
-        col(o.cusip||o.rating||'',12)+
-        col(o.size||'',9)+
-        col(o.coupon||'',8)+
-        col(o.spread?'+'+o.spread.toString().replace(/^\+/,''):''  ,8)+
-        col(o.price||'',10)+
-        col(o.wal||o.maturity||'',6)+
-        col(o.yield||'',7)+
-        (o.structure||o.notes||'')
+        col(o.name||'',20)+
+        col(o.cusip||'',12)+
+        col(o.size||'',10)+
+        col(o.coupon||'',9)+
+        col(o.spread||'',9)+
+        col(o.price||'',11)+
+        col(o.wal||'',7)+
+        col(o.yield||'',9)+
+        [o.structure,o.maturity,o.notes].filter(Boolean).join(' | ')
       );
     });
     lines.push('');

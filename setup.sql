@@ -17,6 +17,9 @@ create table if not exists cmbs_offers (
   rating text,
   rate_type text,
   notes text,
+  cusip text,
+  wal text,
+  yield text,
   created_at timestamptz default now()
 );
 

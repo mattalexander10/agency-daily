@@ -15,7 +15,33 @@ module.exports = async (req, res) => {
   const apiKey = process.env.ANTHROPIC_KEY || process.env.anthropic_key;
   if (!apiKey) return res.status(500).json({ error: 'ANTHROPIC_KEY not configured' });
 
-  const systemPrompt = `You are an expert Agency CMBS trader. Parse the offer list and return ONLY valid JSON — no markdown, no extra text. Group every offer by agency: Fannie Mae (FNMA, Fannie, DUS, GeMS, ACES), Freddie Mac (FHLMC, Freddie, K-Series, SB, Q-Deal, PC), Ginnie Mae (GNMA, Ginnie, FHA, VA, HUD), Other. Return: {"groups":[{"agency":"Fannie Mae","offers":[{"name":"","collateral":"","structure":"","coupon":"","maturity":"","size":"","price":"","spread":"","rating":"","rate_type":"","notes":""}]}]}. Null for unknown. Extract EVERY offer.`;
+  const systemPrompt = `You are an expert Agency CMBS trader. Parse the raw offer list and return ONLY valid JSON — no markdown, no extra text.
+
+CRITICAL ACCURACY RULES:
+- Copy every value EXACTLY as it appears in the source — do not round, reformat, or infer any numbers
+- If a field is not explicitly present in the source data for that offer, set it to null — never guess
+- Every offer must be extracted — do not skip duplicates or small positions
+- CUSIP: extract the 9-character alphanumeric CUSIP if present (e.g. 3137FUZJ6)
+- size: copy exactly as shown (e.g. "1.14mm", "97.98MM", "$10mm")
+- spread: copy exactly as shown (e.g. "27.5", "+68", "S+85")
+- price: copy exactly as shown (e.g. "~84-18", "$99-26", "98-31")
+- coupon: copy exactly as shown (e.g. "2.32%", "4.65%", "Fixed")
+- wal: Weighted Average Life — copy exactly as shown (e.g. "8.00", "9.76")
+- yield: copy exactly as shown (e.g. "~4.72%", "4.8%")
+- maturity: loan term / call structure (e.g. "Seas 15/14.5", "10/9.5", "5/4.5")
+- structure: product type (DUS, PC, K-Series, FHMS, ACE/GEM, PTIO, FTIO, No IO, Floater, etc.)
+- rate_type: Fixed, Floating, or IO
+
+Group by agency:
+- "Fannie Mae" (FN, FNMA, DUS, FNA, ACE, GEM)
+- "Freddie Mac" (FR, FHLMC, FHMS, K-Series, PC)
+- "Ginnie Mae" (GNMA, FHA, VA, HUD)
+- "Other" (SBAP, SBA, anything else)
+
+Return this exact structure, null for missing fields:
+{"groups":[{"agency":"Fannie Mae","offers":[{"cusip":null,"name":"","size":"","coupon":"","spread":"","price":"","wal":"","yield":"","maturity":"","structure":"","rate_type":"","rating":"","collateral":"","notes":""}]}]}
+
+Extract EVERY single offer. Do not omit any.`;
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
