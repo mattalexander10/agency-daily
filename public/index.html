@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CMBS Daily</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:    #0a0a0a;
+  --s1:    #111111;
+  --s2:    #0d0d0d;
+  --s3:    #181818;
+  --line:  #1e1e1e;
+  --line2: #282828;
+  --t1:    #e0e0e0;
+  --t2:    #909090;
+  --t3:    #505050;
+  --t4:    #303030;
+  --grn:   #c9a84c;
+  --grn-d: #1c1608;
+  --grn-b: #3a2c0a;
+  --blu:   #4a9eff;
+  --blu-d: #091520;
+  --blu-b: #102030;
+  --amb:   #e09020;
+  --amb-d: #1a1005;
+  --amb-b: #352008;
+  --pur:   #a78bfa;
+  --pur-d: #150f28;
+  --pur-b: #261848;
+  --red:   #ef4444;
+  --red-d: #1e0808;
+  --red-b: #380e0e;
+  --row-h: #141008;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--t1);font-family:'DM Sans',sans-serif;font-size:13px;overflow:hidden}
+
+/* ── AUTH ── */
+#cp-lock{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center}
+#cp-lock-logo{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.15em;color:var(--grn);margin-bottom:48px;text-transform:uppercase}
+#cp-lock-card{width:300px;border-top:2px solid var(--grn);padding-top:32px;display:flex;flex-direction:column;align-items:flex-start}
+#cp-lock-heading{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--t1);margin-bottom:6px}
+#cp-lock-sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--t3);letter-spacing:.04em;margin-bottom:28px}
+#cp-lock-label{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);margin-bottom:8px}
+#cp-lock-input{width:100%;background:transparent;border:none;border-bottom:1px solid var(--line2);padding:8px 0;font-family:'DM Mono',monospace;font-size:14px;letter-spacing:.15em;color:var(--t1);outline:none;transition:border-color .2s;margin-bottom:32px}
+#cp-lock-input:focus{border-bottom-color:var(--grn)}
+#cp-lock-input::placeholder{color:#2a2a2a}
+#cp-lock-btn{width:100%;padding:11px 0;background:transparent;border:1px solid var(--line2);font-family:'DM Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--grn);cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+#cp-lock-btn:hover{background:var(--grn);border-color:var(--grn);color:var(--bg)}
+#cp-lock-err{font-family:'DM Mono',monospace;font-size:10px;color:var(--red);letter-spacing:.06em;margin-top:12px;min-height:14px;text-transform:uppercase}
+#cp-lock-footer{position:fixed;bottom:28px;font-family:'DM Mono',monospace;font-size:10px;color:var(--t4);letter-spacing:.1em;text-transform:uppercase}
+
+/* ── APP SHELL ── */
+#app{display:none;flex-direction:column;height:100vh}
+
+/* ── TOPBAR ── */
+.topbar{height:48px;background:var(--s1);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 20px;gap:0;flex-shrink:0}
+.brand{font-family:'DM Mono',monospace;font-size:15px;font-weight:600;letter-spacing:.14em;color:var(--grn);text-transform:uppercase;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.topbar-tabs{display:flex;align-items:center;gap:0;margin-left:28px}
+.tb-tab{font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--t3);padding:0 16px;height:48px;display:flex;align-items:center;cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s}
+.tb-tab:hover{color:var(--t1)}
+.tb-tab.active{color:var(--grn);border-bottom-color:var(--grn)}
+.topbar-right{display:flex;align-items:center;gap:14px;margin-left:auto}
+.tb-date{font-family:'DM Mono',monospace;font-size:11px;color:var(--t3);letter-spacing:.06em}
+.tb-export{font-family:'DM Mono',monospace;font-size:9px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--t3);padding:5px 10px;border:1px solid var(--line2);cursor:pointer;background:transparent;transition:color .15s,border-color .15s}
+.tb-export:hover{color:var(--grn);border-color:var(--grn)}
+
+/* ── BODY LAYOUT ── */
+.body-layout{display:flex;flex:1;overflow:hidden}
+
+/* ── LEFT PANEL ── */
+.left-panel{width:360px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid var(--line);background:var(--s2);overflow:hidden}
+
+/* Upload bar */
+.upload-bar{border-left:2px solid var(--grn);margin:16px;background:var(--grn-d);padding:14px 14px 16px}
+.upload-bar-label{font-family:'DM Mono',monospace;font-size:9px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--grn);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.upload-bar-label::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--grn);flex-shrink:0}
+.dealer-input{width:100%;background:transparent;border:none;border-bottom:1px solid var(--line2);padding:6px 0;font-family:'DM Mono',monospace;font-size:12px;color:var(--t1);outline:none;margin-bottom:10px;transition:border-color .2s;letter-spacing:.04em}
+.dealer-input::placeholder{color:var(--t4)}
+.dealer-input:focus{border-bottom-color:var(--grn)}
+.ctextarea{width:100%;height:90px;background:var(--s2);border:1px solid var(--line2);padding:8px 10px;font-family:'DM Mono',monospace;font-size:11px;color:var(--t1);resize:none;outline:none;transition:border-color .2s,box-shadow .2s;line-height:1.5}
+.ctextarea::placeholder{color:var(--t4)}
+.ctextarea:focus{border-color:var(--grn);box-shadow:0 0 0 1px var(--grn-b),0 0 12px rgba(201,168,76,.06)}
+.btn-add{width:100%;margin-top:10px;padding:9px 0;background:var(--grn);border:none;font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--bg);cursor:pointer;transition:opacity .15s}
+.btn-add:hover{opacity:.85}
+.btn-add:active{opacity:.7}
+.upload-hint{font-family:'DM Mono',monospace;font-size:9px;color:var(--t4);margin-top:6px;letter-spacing:.04em}
+
+/* Dealer queue */
+.queue-head{padding:10px 16px 6px;display:flex;align-items:center;justify-content:space-between}
+.queue-head-label{font-family:'DM Mono',monospace;font-size:9px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--t3)}
+.queue-clear{font-family:'DM Mono',monospace;font-size:9px;color:var(--t4);cursor:pointer;letter-spacing:.06em;text-decoration:underline;text-underline-offset:2px;background:none;border:none}
+.queue-clear:hover{color:var(--red)}
+.queue-list{flex:1;overflow-y:auto;padding:0 16px 8px}
+.queue-list::-webkit-scrollbar{width:3px}
+.queue-list::-webkit-scrollbar-track{background:transparent}
+.queue-list::-webkit-scrollbar-thumb{background:var(--line2)}
+.dealer-item{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border:1px solid var(--line);background:var(--s3);margin-bottom:4px}
+.dealer-item-info{flex:1;min-width:0}
+.dealer-item-name{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;color:var(--t1);letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dealer-item-meta{font-family:'DM Mono',monospace;font-size:9px;color:var(--t3);margin-top:2px;letter-spacing:.04em}
+.dealer-item-status{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.04em;margin-top:3px}
+.status-idle{color:var(--t4)}
+.status-parsing{color:var(--amb);animation:blink 1s ease-in-out infinite}
+.status-ok{color:var(--grn)}
+.status-err{color:var(--red)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.dealer-item-rm{background:none;border:none;color:var(--t4);cursor:pointer;font-size:14px;line-height:1;padding:0 2px;flex-shrink:0;margin-top:1px}
+.dealer-item-rm:hover{color:var(--red)}
+
+/* Organize button */
+.organize-footer{padding:12px 16px;border-top:1px solid var(--line)}
+.btn-organize{width:100%;padding:10px 0;background:transparent;border:1px solid var(--grn);font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--grn);cursor:pointer;transition:background .15s,color .15s}
+.btn-organize:hover{background:var(--grn-b)}
+.btn-organize:active{background:var(--grn);color:var(--bg)}
+.btn-organize:disabled{opacity:.3;cursor:not-allowed}
+
+/* ── RIGHT PANEL ── */
+.right-panel{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* Tab strip */
+.rp-tabs{display:flex;align-items:center;padding:0 20px;border-bottom:1px solid var(--line);background:var(--s1);flex-shrink:0;height:40px;gap:0}
+.rp-tab{font-family:'DM Mono',monospace;font-size:9px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--t3);padding:0 14px;height:40px;display:flex;align-items:center;cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s}
+.rp-tab:hover{color:var(--t1)}
+.rp-tab.active{color:var(--grn);border-bottom-color:var(--grn)}
+.agency-chips{display:flex;align-items:center;gap:4px;margin-left:auto}
+.agency-chip{font-family:'DM Mono',monospace;font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);padding:3px 8px;border:1px solid var(--line2);cursor:pointer;transition:color .15s,border-color .15s,background .15s}
+.agency-chip:hover{color:var(--t1);border-color:var(--t4)}
+.agency-chip.active{color:var(--grn);border-color:var(--grn);background:var(--grn-d)}
+
+/* Stats row */
+.stats-row{display:flex;border-bottom:1px solid var(--line);flex-shrink:0}
+.stat-cell{flex:1;padding:10px 16px;border-right:1px solid var(--line)}
+.stat-cell:last-child{border-right:none}
+.stat-l{font-family:'DM Mono',monospace;font-size:8px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--t3);margin-bottom:4px}
+.stat-v{font-family:'DM Mono',monospace;font-size:18px;font-weight:500;color:var(--grn);letter-spacing:.02em}
+.stat-sub{font-family:'DM Mono',monospace;font-size:9px;color:var(--t4);margin-top:2px}
+
+/* Preview bar */
+.preview-bar{padding:8px 20px;border-bottom:1px solid var(--line);background:var(--s2);font-family:'DM Mono',monospace;font-size:10px;color:var(--t3);letter-spacing:.04em;min-height:32px;flex-shrink:0}
+.preview-bar.ok{color:var(--grn)}
+.preview-bar.err{color:var(--red)}
+.preview-bar.loading{color:var(--amb)}
+
+/* Table area */
+.table-wrap{flex:1;overflow-y:auto}
+.table-wrap::-webkit-scrollbar{width:4px}
+.table-wrap::-webkit-scrollbar-track{background:transparent}
+.table-wrap::-webkit-scrollbar-thumb{background:var(--line2)}
+
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+thead{position:sticky;top:0;z-index:10;background:var(--s1)}
+th{font-family:'DM Mono',monospace;font-size:8px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+td{font-family:'DM Mono',monospace;font-size:11px;color:var(--t2);padding:6px 10px;border-bottom:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+tr:hover td{background:var(--row-h)}
+td.t1{color:var(--t1);font-weight:500}
+td.grn{color:var(--grn)}
+td.amb{color:var(--amb)}
+td.red{color:var(--red)}
+
+/* Agency group header */
+.agency-group-row td{background:var(--s3);color:var(--t3);font-size:9px;letter-spacing:.14em;text-transform:uppercase;padding:5px 10px;border-top:1px solid var(--line2)}
+.agency-badge{display:inline-block;padding:1px 6px;font-family:'DM Mono',monospace;font-size:8px;font-weight:500;letter-spacing:.1em;text-transform:uppercase}
+.badge-fnma{background:var(--blu-d);color:var(--blu);border:1px solid var(--blu-b)}
+.badge-fhlmc{background:var(--grn-d);color:var(--grn);border:1px solid var(--grn-b)}
+.badge-gnma{background:var(--pur-d);color:var(--pur);border:1px solid var(--pur-b)}
+.badge-other{background:var(--s3);color:var(--t3);border:1px solid var(--line2)}
+.star{color:var(--grn);margin-left:4px}
+
+/* History date group */
+.date-group-row td{background:var(--amb-d);color:var(--amb);font-size:9px;letter-spacing:.12em;text-transform:uppercase;padding:5px 10px;border-top:1px solid var(--amb-b)}
+
+/* Empty state */
+.empty-state{padding:60px 20px;text-align:center;font-family:'DM Mono',monospace;font-size:11px;color:var(--t4);letter-spacing:.06em}
+
+/* Column widths — TODAY */
+.col-bond{width:160px}
+.col-dealer{width:110px}
+.col-coll{width:90px}
+.col-struct{width:80px}
+.col-rate{width:60px}
+.col-cpn{width:70px}
+.col-size{width:70px}
+.col-spd{width:70px}
+.col-px{width:70px}
+.col-mat{width:80px}
+.col-rat{width:60px}
+.col-notes{width:auto}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="cp-lock">
+  <div id="cp-lock-logo">CMBS Daily</div>
+  <div id="cp-lock-card">
+    <div id="cp-lock-heading">CMBS Daily</div>
+    <div id="cp-lock-sub">FIRM USE ONLY</div>
+    <div id="cp-lock-label">Access Code</div>
+    <input id="cp-lock-input" type="password" placeholder="···············" autocomplete="off" onkeydown="if(event.key==='Enter')cpUnlock();" autofocus>
+    <button id="cp-lock-btn" onclick="cpUnlock()">Authenticate</button>
+    <div id="cp-lock-err"></div>
+  </div>
+  <div id="cp-lock-footer">Cross Point Capital &nbsp;·&nbsp; Confidential</div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="brand">
+      <svg width="13" height="13" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">
+        <path d="M16 2 L20 12 L30 16 L20 20 L16 30 L12 20 L2 16 L12 12 Z" fill="#c9a84c"/>
+      </svg>
+      CMBS Daily
+    </div>
+    <div class="topbar-tabs">
+      <div class="tb-tab active" onclick="setTopTab('today')">Today</div>
+      <div class="tb-tab" onclick="setTopTab('crossref')">Cross Ref</div>
+      <div class="tb-tab" onclick="setTopTab('history')">History</div>
+    </div>
+    <div class="topbar-right">
+      <div class="tb-date" id="tb-date"></div>
+      <button class="tb-export" onclick="exportCSV()">Export CSV</button>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="body-layout">
+
+    <!-- LEFT PANEL -->
+    <div class="left-panel">
+      <div class="upload-bar">
+        <div class="upload-bar-label">Add Dealer List</div>
+        <input class="dealer-input" id="dealer-name" type="text" placeholder="Dealer name (e.g. Goldman)" autocomplete="off">
+        <textarea class="ctextarea" id="offer-text" placeholder="Paste offer list here&#10;&#10;Ctrl+Enter to add"></textarea>
+        <button class="btn-add" onclick="addDealer()">Add List</button>
+        <div class="upload-hint">Ctrl+Enter to add · each dealer is parsed separately</div>
+      </div>
+
+      <div class="queue-head">
+        <div class="queue-head-label">Dealer Queue <span id="queue-count" style="color:var(--t4);margin-left:4px"></span></div>
+        <button class="queue-clear" onclick="clearAllDealers()">clear all</button>
+      </div>
+      <div class="queue-list" id="queue-list"></div>
+
+      <div class="organize-footer">
+        <button class="btn-organize" id="btn-organize" onclick="organizeAll()">Organize All</button>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="right-panel">
+      <div class="rp-tabs">
+        <div class="rp-tab active" onclick="setRpTab('today')" id="rptab-today">Today</div>
+        <div class="rp-tab" onclick="setRpTab('crossref')" id="rptab-crossref">Cross Ref</div>
+        <div class="rp-tab" onclick="setRpTab('history')" id="rptab-history">History</div>
+        <div class="agency-chips" id="agency-chips">
+          <div class="agency-chip active" onclick="setAgency('ALL')">All</div>
+          <div class="agency-chip" onclick="setAgency('Fannie Mae')">FNMA</div>
+          <div class="agency-chip" onclick="setAgency('Freddie Mac')">FHLMC</div>
+          <div class="agency-chip" onclick="setAgency('Ginnie Mae')">GNMA</div>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-cell">
+          <div class="stat-l">Offers</div>
+          <div class="stat-v" id="stat-offers">0</div>
+          <div class="stat-sub">today</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-l">Dealers</div>
+          <div class="stat-v" id="stat-dealers">0</div>
+          <div class="stat-sub">in queue</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-l">Cross-Dealer</div>
+          <div class="stat-v" id="stat-cross">0</div>
+          <div class="stat-sub">overlapping bonds</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-l">Days Tracked</div>
+          <div class="stat-v" id="stat-days">—</div>
+          <div class="stat-sub">in database</div>
+        </div>
+      </div>
+
+      <div class="preview-bar" id="preview-bar">Ready — add dealer lists and click Organize All</div>
+
+      <div class="table-wrap" id="table-wrap">
+        <div class="empty-state" id="empty-state">No offers loaded. Add dealer lists and click Organize All.</div>
+        <div id="table-container" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──
+var dealers = [];        // [{id, name, text, status, offers, lineCount}]
+var allOffers = [];      // flat after organize: [{dealer,agency,name,...}]
+var historyOffers = [];  // from DB
+var activeAgency = 'ALL';
+var activeRpTab = 'today';
+var historyLoaded = false;
+
+// ── AUTH ──
+(function(){
+  if(sessionStorage.getItem('cmbs_auth')==='1'){
+    document.getElementById('cp-lock').style.display='none';
+    document.getElementById('app').style.display='flex';
+    init();
+  }
+})();
+
+function cpUnlock(){
+  var v=document.getElementById('cp-lock-input').value;
+  if(v==='cpc2026'){
+    sessionStorage.setItem('cmbs_auth','1');
+    document.getElementById('cp-lock').style.display='none';
+    document.getElementById('app').style.display='flex';
+    init();
+  } else {
+    var e=document.getElementById('cp-lock-err');
+    e.textContent='Incorrect code.';
+    document.getElementById('cp-lock-input').value='';
+    document.getElementById('cp-lock-input').focus();
+    setTimeout(function(){e.textContent='';},2000);
+  }
+}
+
+// ── INIT ──
+function init(){
+  updateDateDisplay();
+  setInterval(updateDateDisplay,60000);
+  fetchDaysTracked();
+  // Ctrl+Enter on textarea
+  document.getElementById('offer-text').addEventListener('keydown',function(e){
+    if(e.ctrlKey && e.key==='Enter'){e.preventDefault();addDealer();}
+  });
+}
+
+function updateDateDisplay(){
+  var now=new Date();
+  var opts={weekday:'short',year:'numeric',month:'short',day:'numeric'};
+  document.getElementById('tb-date').textContent=now.toLocaleDateString('en-US',opts).toUpperCase();
+}
+
+async function fetchDaysTracked(){
+  try{
+    var r=await fetch('/api/offers');
+    if(!r.ok)return;
+    var data=await r.json();
+    if(!Array.isArray(data))return;
+    var dates=new Set(data.map(function(o){return o.date;}));
+    document.getElementById('stat-days').textContent=dates.size||'0';
+    historyOffers=data;
+  }catch(e){}
+}
+
+// ── TOP TAB ──
+function setTopTab(tab){
+  document.querySelectorAll('.tb-tab').forEach(function(el,i){
+    var tabs=['today','crossref','history'];
+    el.classList.toggle('active',tabs[i]===tab);
+  });
+  setRpTab(tab);
+}
+
+// ── RIGHT PANEL TAB ──
+function setRpTab(tab){
+  activeRpTab=tab;
+  document.getElementById('rptab-today').classList.toggle('active',tab==='today');
+  document.getElementById('rptab-crossref').classList.toggle('active',tab==='crossref');
+  document.getElementById('rptab-history').classList.toggle('active',tab==='history');
+  document.getElementById('agency-chips').style.display=(tab==='history')?'none':'flex';
+  if(tab==='history'){
+    renderHistory();
+  } else {
+    renderTable();
+  }
+}
+
+// ── AGENCY FILTER ──
+function setAgency(a){
+  activeAgency=a;
+  document.querySelectorAll('.agency-chip').forEach(function(el){
+    var map={'ALL':'All','Fannie Mae':'FNMA','Freddie Mac':'FHLMC','Ginnie Mae':'GNMA'};
+    el.classList.toggle('active',map[a]===el.textContent.trim()||el.textContent.trim()===a);
+  });
+  renderTable();
+}
+
+// ── ADD DEALER ──
+function addDealer(){
+  var name=document.getElementById('dealer-name').value.trim();
+  var text=document.getElementById('offer-text').value.trim();
+  if(!name){setPreview('Enter a dealer name.','err');return;}
+  if(!text){setPreview('Paste an offer list.','err');return;}
+  var lines=text.split('\n').filter(function(l){return l.trim();}).length;
+  var id=Date.now()+'_'+Math.random().toString(36).slice(2,6);
+  dealers.push({id:id,name:name,text:text,status:'idle',offers:[],lineCount:lines});
+  document.getElementById('dealer-name').value='';
+  document.getElementById('offer-text').value='';
+  document.getElementById('dealer-name').focus();
+  renderQueue();
+  updateStats();
+  setPreview('Dealer "'+name+'" added to queue. Click Organize All to parse.','');
+}
+
+// ── QUEUE RENDER ──
+function renderQueue(){
+  var list=document.getElementById('queue-list');
+  document.getElementById('queue-count').textContent=dealers.length?'('+dealers.length+')':'';
+  if(!dealers.length){
+    list.innerHTML='<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--t4);padding:12px 4px;letter-spacing:.06em">No dealers added yet.</div>';
+    return;
+  }
+  list.innerHTML=dealers.map(function(d){
+    var statusHtml='';
+    if(d.status==='idle') statusHtml='<div class="dealer-item-status status-idle">idle</div>';
+    else if(d.status==='parsing') statusHtml='<div class="dealer-item-status status-parsing">parsing...</div>';
+    else if(d.status==='ok') statusHtml='<div class="dealer-item-status status-ok">✓ '+d.offers.length+' offers</div>';
+    else if(d.status==='err') statusHtml='<div class="dealer-item-status status-err">✗ error</div>';
+    return '<div class="dealer-item" id="ditem-'+d.id+'">'+
+      '<div class="dealer-item-info">'+
+        '<div class="dealer-item-name">'+esc(d.name)+'</div>'+
+        '<div class="dealer-item-meta">'+d.lineCount+' lines</div>'+
+        statusHtml+
+      '</div>'+
+      '<button class="dealer-item-rm" onclick="removeDealer(\''+d.id+'\')">×</button>'+
+    '</div>';
+  }).join('');
+}
+
+function removeDealer(id){
+  dealers=dealers.filter(function(d){return d.id!==id;});
+  allOffers=allOffers.filter(function(o){
+    var d=dealers.find(function(x){return x.name===o.dealer;});
+    return !!d;
+  });
+  renderQueue();
+  updateStats();
+  renderTable();
+}
+
+function clearAllDealers(){
+  dealers=[];
+  allOffers=[];
+  renderQueue();
+  updateStats();
+  renderTable();
+}
+
+// ── ORGANIZE ALL ──
+async function organizeAll(){
+  if(!dealers.length){setPreview('Add at least one dealer list first.','err');return;}
+  var btn=document.getElementById('btn-organize');
+  btn.disabled=true;
+  btn.textContent='Organizing...';
+  setPreview('Parsing '+dealers.length+' dealer list(s)...','loading');
+
+  // Parse all in parallel
+  var promises=dealers.map(function(d){
+    return parseDealer(d);
+  });
+  await Promise.all(promises);
+
+  // Flatten all parsed offers
+  allOffers=[];
+  dealers.forEach(function(d){
+    if(d.status==='ok'){
+      d.offers.forEach(function(o){
+        allOffers.push(Object.assign({},o,{dealer:d.name}));
+      });
+    }
+  });
+
+  // Save to DB
+  if(allOffers.length>0){
+    setPreview('Saving '+allOffers.length+' offers to database...','loading');
+    try{
+      var today=isoDate(new Date());
+      var r=await fetch('/api/offers',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({date:today,offers:allOffers})
+      });
+      var result=await r.json();
+      if(r.ok){
+        setPreview('Saved '+allOffers.length+' offers from '+dealers.length+' dealers.','ok');
+        historyLoaded=false;
+        fetchDaysTracked();
+      } else {
+        setPreview('Parsed but DB save failed: '+(result.error||'unknown'),'err');
+      }
+    }catch(e){
+      setPreview('Parsed but network error saving to DB.','err');
+    }
+  } else {
+    setPreview('No offers found. Check dealer list format.','err');
+  }
+
+  updateStats();
+  renderTable();
+  btn.disabled=false;
+  btn.textContent='Organize All';
+}
+
+async function parseDealer(d){
+  d.status='parsing';
+  updateDealerStatus(d);
+  try{
+    var r=await fetch('/api/parse',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({dealer:d.name,text:d.text})
+    });
+    var data=await r.json();
+    if(!r.ok){d.status='err';updateDealerStatus(d);return;}
+    // Flatten groups
+    var offers=[];
+    if(data.groups&&Array.isArray(data.groups)){
+      data.groups.forEach(function(g){
+        if(g.offers&&Array.isArray(g.offers)){
+          g.offers.forEach(function(o){
+            offers.push(Object.assign({},o,{agency:g.agency}));
+          });
+        }
+      });
+    }
+    d.offers=offers;
+    d.status='ok';
+  }catch(e){
+    d.status='err';
+  }
+  updateDealerStatus(d);
+}
+
+function updateDealerStatus(d){
+  var el=document.getElementById('ditem-'+d.id);
+  if(!el)return;
+  var statusEl=el.querySelector('.dealer-item-status');
+  if(!statusEl){
+    statusEl=document.createElement('div');
+    statusEl.className='dealer-item-status';
+    el.querySelector('.dealer-item-info').appendChild(statusEl);
+  }
+  statusEl.className='dealer-item-status';
+  if(d.status==='parsing'){statusEl.classList.add('status-parsing');statusEl.textContent='parsing...';}
+  else if(d.status==='ok'){statusEl.classList.add('status-ok');statusEl.textContent='✓ '+d.offers.length+' offers';}
+  else if(d.status==='err'){statusEl.classList.add('status-err');statusEl.textContent='✗ error';}
+  else{statusEl.classList.add('status-idle');statusEl.textContent='idle';}
+}
+
+// ── STATS ──
+function updateStats(){
+  var filtered=filterByAgency(allOffers);
+  document.getElementById('stat-offers').textContent=filtered.length;
+  document.getElementById('stat-dealers').textContent=dealers.length;
+  // Cross-dealer: bonds with same name from multiple dealers
+  var nameDealer={};
+  allOffers.forEach(function(o){
+    if(!o.name)return;
+    var k=(o.name||'').toLowerCase().trim();
+    if(!nameDealer[k])nameDealer[k]=new Set();
+    nameDealer[k].add(o.dealer);
+  });
+  var cross=Object.values(nameDealer).filter(function(s){return s.size>1;}).length;
+  document.getElementById('stat-cross').textContent=cross;
+}
+
+// ── RENDER TABLE ──
+function renderTable(){
+  updateStats();
+  var wrap=document.getElementById('table-wrap');
+  var empty=document.getElementById('empty-state');
+  var container=document.getElementById('table-container');
+
+  var offers=filterByAgency(allOffers);
+  if(!offers.length){
+    empty.style.display='block';
+    container.style.display='none';
+    container.innerHTML='';
+    return;
+  }
+  empty.style.display='none';
+  container.style.display='block';
+
+  if(activeRpTab==='crossref'){
+    renderCrossRef(container);
+  } else {
+    renderToday(container,offers);
+  }
+}
+
+function renderToday(container,offers){
+  // Group by agency
+  var groups={};
+  var ORDER=['Fannie Mae','Freddie Mac','Ginnie Mae','Other'];
+  ORDER.forEach(function(a){groups[a]=[];});
+  offers.forEach(function(o){
+    var a=o.agency||'Other';
+    if(!groups[a])groups[a]=[];
+    groups[a].push(o);
+  });
+
+  // Build multi-dealer name set
+  var nameCounts={};
+  allOffers.forEach(function(o){
+    var k=(o.name||'').toLowerCase().trim();
+    if(!nameCounts[k])nameCounts[k]=new Set();
+    nameCounts[k].add(o.dealer);
+  });
+
+  var html='<table><thead><tr>'+
+    '<th class="col-bond">Bond / ID</th>'+
+    '<th class="col-dealer">Dealer</th>'+
+    '<th class="col-coll">Collateral</th>'+
+    '<th class="col-struct">Structure</th>'+
+    '<th class="col-rate">Rate</th>'+
+    '<th class="col-cpn">Coupon</th>'+
+    '<th class="col-size">Size</th>'+
+    '<th class="col-spd">Spread</th>'+
+    '<th class="col-px">Price</th>'+
+    '<th class="col-mat">Maturity</th>'+
+    '<th class="col-rat">Rating</th>'+
+    '<th class="col-notes">Notes</th>'+
+  '</tr></thead><tbody>';
+
+  ORDER.forEach(function(agency){
+    var rows=groups[agency];
+    if(!rows||!rows.length)return;
+    var badgeCls=agencyBadgeClass(agency);
+    html+='<tr class="agency-group-row"><td colspan="12"><span class="agency-badge '+badgeCls+'">'+agency+'</span></td></tr>';
+    rows.forEach(function(o){
+      var k=(o.name||'').toLowerCase().trim();
+      var multi=nameCounts[k]&&nameCounts[k].size>1;
+      html+='<tr>'+
+        '<td class="t1 col-bond">'+esc(o.name||'—')+(multi?'<span class="star" title="Quoted by multiple dealers">★</span>':'')+'</td>'+
+        '<td class="col-dealer">'+esc(o.dealer||'—')+'</td>'+
+        '<td class="col-coll">'+esc(o.collateral||'—')+'</td>'+
+        '<td class="col-struct">'+esc(o.structure||'—')+'</td>'+
+        '<td class="col-rate">'+esc(o.rate_type||'—')+'</td>'+
+        '<td class="col-cpn grn">'+esc(o.coupon||'—')+'</td>'+
+        '<td class="col-size">'+esc(o.size||'—')+'</td>'+
+        '<td class="col-spd amb">'+esc(o.spread||'—')+'</td>'+
+        '<td class="col-px">'+esc(o.price||'—')+'</td>'+
+        '<td class="col-mat">'+esc(o.maturity||'—')+'</td>'+
+        '<td class="col-rat">'+esc(o.rating||'—')+'</td>'+
+        '<td class="col-notes">'+esc(o.notes||'')+'</td>'+
+      '</tr>';
+    });
+  });
+
+  html+='</tbody></table>';
+  container.innerHTML=html;
+}
+
+function renderCrossRef(container){
+  // Only bonds with multiple dealers
+  var nameDealerMap={};
+  allOffers.forEach(function(o){
+    var k=(o.name||'').toLowerCase().trim();
+    if(!k)return;
+    if(!nameDealerMap[k])nameDealerMap[k]=[];
+    nameDealerMap[k].push(o);
+  });
+  var crossOffers=[];
+  Object.values(nameDealerMap).forEach(function(arr){
+    if(arr.length>1)crossOffers=crossOffers.concat(arr);
+  });
+
+  if(!crossOffers.length){
+    container.innerHTML='<div class="empty-state">No cross-dealer bonds found. Parse multiple dealer lists covering the same bonds.</div>';
+    return;
+  }
+
+  // Group by bond name
+  var grouped={};
+  crossOffers.forEach(function(o){
+    var k=(o.name||'').toLowerCase().trim();
+    if(!grouped[k])grouped[k]=[];
+    grouped[k].push(o);
+  });
+
+  var html='<table><thead><tr>'+
+    '<th style="width:160px">Bond</th>'+
+    '<th style="width:90px">Agency</th>'+
+    '<th style="width:110px">Dealer</th>'+
+    '<th style="width:70px">Size</th>'+
+    '<th style="width:80px">Spread</th>'+
+    '<th style="width:70px">Price</th>'+
+    '<th style="width:70px">Coupon</th>'+
+    '<th style="width:80px">Maturity</th>'+
+    '<th>Notes</th>'+
+  '</tr></thead><tbody>';
+
+  Object.values(grouped).forEach(function(rows){
+    // Find best (lowest) spread
+    var spreads=rows.map(function(o){return parseSpread(o.spread);});
+    var minSpread=Math.min.apply(null,spreads.filter(function(s){return !isNaN(s);}));
+
+    rows.forEach(function(o,i){
+      var spd=parseSpread(o.spread);
+      var isBest=!isNaN(spd)&&spd===minSpread&&!isNaN(minSpread);
+      html+='<tr>'+
+        '<td class="t1">'+esc(o.name||'—')+'</td>'+
+        '<td><span class="agency-badge '+agencyBadgeClass(o.agency)+'">'+agencyShort(o.agency)+'</span></td>'+
+        '<td>'+esc(o.dealer||'—')+'</td>'+
+        '<td>'+esc(o.size||'—')+'</td>'+
+        '<td class="'+(isBest?'grn':'amb')+'">'+esc(o.spread||'—')+(isBest?' ★':'')+'</td>'+
+        '<td>'+esc(o.price||'—')+'</td>'+
+        '<td class="grn">'+esc(o.coupon||'—')+'</td>'+
+        '<td>'+esc(o.maturity||'—')+'</td>'+
+        '<td>'+esc(o.notes||'')+'</td>'+
+      '</tr>';
+    });
+  });
+
+  html+='</tbody></table>';
+  container.innerHTML=html;
+}
+
+function renderHistory(){
+  var container=document.getElementById('table-container');
+  var empty=document.getElementById('empty-state');
+
+  if(!historyLoaded){
+    container.style.display='none';
+    empty.style.display='block';
+    empty.innerHTML='Loading history...';
+    fetch('/api/offers').then(function(r){return r.json();}).then(function(data){
+      historyLoaded=true;
+      historyOffers=Array.isArray(data)?data:[];
+      var dates=new Set(historyOffers.map(function(o){return o.date;}));
+      document.getElementById('stat-days').textContent=dates.size||'0';
+      renderHistory();
+    }).catch(function(){
+      empty.innerHTML='Failed to load history.';
+    });
+    return;
+  }
+
+  if(!historyOffers.length){
+    empty.style.display='block';
+    empty.innerHTML='No history found.';
+    container.style.display='none';
+    container.innerHTML='';
+    return;
+  }
+
+  empty.style.display='none';
+  container.style.display='block';
+
+  // Group by date desc
+  var byDate={};
+  historyOffers.forEach(function(o){
+    if(!byDate[o.date])byDate[o.date]=[];
+    byDate[o.date].push(o);
+  });
+  var dates=Object.keys(byDate).sort().reverse();
+
+  var html='<table><thead><tr>'+
+    '<th style="width:150px">Bond</th>'+
+    '<th style="width:100px">Dealer</th>'+
+    '<th style="width:90px">Agency</th>'+
+    '<th style="width:90px">Collateral</th>'+
+    '<th style="width:80px">Structure</th>'+
+    '<th style="width:70px">Size</th>'+
+    '<th style="width:70px">Spread</th>'+
+    '<th style="width:70px">Price</th>'+
+    '<th style="width:70px">Coupon</th>'+
+    '<th style="width:80px">Maturity</th>'+
+  '</tr></thead><tbody>';
+
+  dates.forEach(function(d){
+    var rows=byDate[d];
+    html+='<tr class="date-group-row"><td colspan="10">'+formatDate(d)+' &nbsp;·&nbsp; '+rows.length+' offers</td></tr>';
+    rows.forEach(function(o){
+      html+='<tr>'+
+        '<td class="t1">'+esc(o.name||'—')+'</td>'+
+        '<td>'+esc(o.dealer||'—')+'</td>'+
+        '<td><span class="agency-badge '+agencyBadgeClass(o.agency)+'">'+agencyShort(o.agency)+'</span></td>'+
+        '<td>'+esc(o.collateral||'—')+'</td>'+
+        '<td>'+esc(o.structure||'—')+'</td>'+
+        '<td>'+esc(o.size||'—')+'</td>'+
+        '<td class="amb">'+esc(o.spread||'—')+'</td>'+
+        '<td>'+esc(o.price||'—')+'</td>'+
+        '<td class="grn">'+esc(o.coupon||'—')+'</td>'+
+        '<td>'+esc(o.maturity||'—')+'</td>'+
+      '</tr>';
+    });
+  });
+
+  html+='</tbody></table>';
+  container.innerHTML=html;
+}
+
+// ── EXPORT CSV ──
+function exportCSV(){
+  var rows,headers;
+  if(activeRpTab==='history'){
+    headers=['Date','Bond','Dealer','Agency','Collateral','Structure','Size','Spread','Price','Coupon','Maturity'];
+    rows=historyOffers.map(function(o){
+      return [o.date,o.name,o.dealer,o.agency,o.collateral,o.structure,o.size,o.spread,o.price,o.coupon,o.maturity];
+    });
+  } else {
+    var offers=filterByAgency(allOffers);
+    headers=['Bond','Dealer','Agency','Collateral','Structure','Rate Type','Coupon','Size','Spread','Price','Maturity','Rating','Notes'];
+    rows=offers.map(function(o){
+      return [o.name,o.dealer,o.agency,o.collateral,o.structure,o.rate_type,o.coupon,o.size,o.spread,o.price,o.maturity,o.rating,o.notes];
+    });
+  }
+  var csv=[headers.join(',')].concat(rows.map(function(r){
+    return r.map(function(v){
+      var s=String(v||'').replace(/"/g,'""');
+      return s.includes(',')||s.includes('"')||s.includes('\n')?'"'+s+'"':s;
+    }).join(',');
+  })).join('\n');
+  var blob=new Blob([csv],{type:'text/csv'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='cmbs-daily-'+isoDate(new Date())+'.csv';
+  a.click();
+}
+
+// ── HELPERS ──
+function filterByAgency(offers){
+  if(activeAgency==='ALL')return offers;
+  return offers.filter(function(o){return o.agency===activeAgency;});
+}
+
+function agencyBadgeClass(a){
+  if(!a)return 'badge-other';
+  var l=a.toLowerCase();
+  if(l.includes('fannie'))return 'badge-fnma';
+  if(l.includes('freddie'))return 'badge-fhlmc';
+  if(l.includes('ginnie'))return 'badge-gnma';
+  return 'badge-other';
+}
+
+function agencyShort(a){
+  if(!a)return 'OTHER';
+  var l=a.toLowerCase();
+  if(l.includes('fannie'))return 'FNMA';
+  if(l.includes('freddie'))return 'FHLMC';
+  if(l.includes('ginnie'))return 'GNMA';
+  return 'OTHER';
+}
+
+function parseSpread(s){
+  if(!s)return NaN;
+  var m=String(s).match(/[\d.]+/);
+  return m?parseFloat(m[0]):NaN;
+}
+
+function isoDate(d){
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+function formatDate(s){
+  if(!s)return '';
+  var parts=s.split('-');
+  var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return months[parseInt(parts[1],10)-1]+' '+parseInt(parts[2],10)+', '+parts[0];
+}
+
+function esc(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function setPreview(msg,type){
+  var el=document.getElementById('preview-bar');
+  el.textContent=msg;
+  el.className='preview-bar'+(type?' '+type:'');
+}
+</script>
+</body>
+</html>

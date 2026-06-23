@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "cmbs-daily",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "public", "-l", "3457", "--no-clipboard"],
+      "port": 3457
+    }
+  ]
+}
