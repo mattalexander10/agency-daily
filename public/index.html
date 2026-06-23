@@ -259,12 +259,7 @@ td.red{color:var(--red)}
         <div class="rp-tab active" onclick="setRpTab('today')" id="rptab-today">Today</div>
         <div class="rp-tab" onclick="setRpTab('crossref')" id="rptab-crossref">Cross Ref</div>
         <div class="rp-tab" onclick="setRpTab('history')" id="rptab-history">History</div>
-        <div class="agency-chips" id="agency-chips">
-          <div class="agency-chip active" onclick="setAgency('ALL')">All</div>
-          <div class="agency-chip" onclick="setAgency('Fannie Mae')">FNMA</div>
-          <div class="agency-chip" onclick="setAgency('Freddie Mac')">FHLMC</div>
-          <div class="agency-chip" onclick="setAgency('Ginnie Mae')">GNMA</div>
-        </div>
+        <div class="agency-chips" id="agency-chips"></div>
       </div>
 
       <div class="stats-row">
@@ -306,6 +301,24 @@ var dealers = [];        // [{id, name, text, status, offers, lineCount}]
 var allOffers = [];      // flat after organize: [{dealer,agency,name,...}]
 var historyOffers = [];  // from DB
 var activeAgency = 'ALL';
+var activeProduct = 'ALL';
+
+// Detect product type from offer fields
+function getProduct(o){
+  var name = (o.name||'').toUpperCase();
+  var struct = (o.structure||'').toUpperCase();
+  var notes = (o.notes||'').toUpperCase();
+  var all = name+' '+struct+' '+notes;
+  if(name.startsWith('SBAP')||all.includes('SBA')) return 'SBA';
+  if(name.includes('FHMS')||all.includes('K-SERIES')||all.includes('FHMS')||all.includes(' K1')||all.includes('KG')||all.includes('K75')||all.includes('K76')||all.includes('K07')||struct.includes('K-')) return 'FHMS';
+  if(all.includes('ACE')||all.includes('GEM')||name.startsWith('FNA')) return 'ACE/GEM';
+  if(all.includes('DUS')) return 'DUS';
+  if(all.includes(' PC ')||struct.includes('PC')||all.includes('PTIO')||all.includes('FTIO')||all.includes('NO IO')&&o.agency&&o.agency.includes('Freddie')) return 'PC';
+  if(o.agency&&o.agency.includes('Ginnie')) return 'GNMA';
+  if(o.agency&&o.agency.includes('Fannie')) return 'DUS';
+  if(o.agency&&o.agency.includes('Freddie')) return 'PC';
+  return 'OTHER';
+}
 var activeRpTab = 'today';
 var historyLoaded = false;
 
@@ -387,6 +400,26 @@ function setRpTab(tab){
 }
 
 // ── AGENCY FILTER ──
+var PRODUCT_ORDER = ['ALL','DUS','FHMS','PC','ACE/GEM','SBA','GNMA','OTHER'];
+
+function renderFilterChips(offers){
+  // Count by product
+  var counts = {ALL: offers.length};
+  PRODUCT_ORDER.slice(1).forEach(function(p){ counts[p]=0; });
+  offers.forEach(function(o){ var p=getProduct(o); if(counts[p]!==undefined) counts[p]++; else counts['OTHER']++; });
+  var el = document.getElementById('agency-chips');
+  el.innerHTML = PRODUCT_ORDER.filter(function(p){ return p==='ALL'||counts[p]>0; }).map(function(p){
+    var active = activeProduct===p;
+    return '<div class="agency-chip'+(active?' active':'')+'" onclick="setProduct(\''+p+'\')" style="'+(active?'':'')+'">'+p+(p!=='ALL'?' <span style="opacity:.5;font-size:10px">'+counts[p]+'</span>':'')+'</div>';
+  }).join('');
+}
+
+function setProduct(p){
+  activeProduct=p;
+  renderFilterChips(allOffers);
+  renderTable();
+}
+
 function setAgency(a){
   activeAgency=a;
   document.querySelectorAll('.agency-chip').forEach(function(el){
@@ -507,6 +540,7 @@ async function organizeAll(){
   }
 
   updateStats();
+  renderFilterChips(allOffers);
   renderTable();
   btn.disabled=false;
   btn.textContent='Organize All';
@@ -832,8 +866,10 @@ function exportCSV(){
 
 // ── HELPERS ──
 function filterByAgency(offers){
-  if(activeAgency==='ALL')return offers;
-  return offers.filter(function(o){return o.agency===activeAgency;});
+  var out = offers;
+  if(activeAgency!=='ALL') out=out.filter(function(o){return o.agency===activeAgency;});
+  if(activeProduct!=='ALL') out=out.filter(function(o){return getProduct(o)===activeProduct;});
+  return out;
 }
 
 function agencyBadgeClass(a){
