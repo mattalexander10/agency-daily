@@ -4,8 +4,8 @@ const CORS = {
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_KEY;
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.supabase_url;
+const SUPABASE_KEY = process.env.SUPABASE_KEY || process.env.supabase_key;
 
 async function sbFetch(path, options = {}) {
   const url = `${SUPABASE_URL}/rest/v1${path}`;

@@ -12,7 +12,7 @@ module.exports = async (req, res) => {
   const { dealer, text } = req.body || {};
   if (!dealer || !text) return res.status(400).json({ error: 'dealer and text required' });
 
-  const apiKey = process.env.ANTHROPIC_KEY;
+  const apiKey = process.env.ANTHROPIC_KEY || process.env.anthropic_key;
   if (!apiKey) return res.status(500).json({ error: 'ANTHROPIC_KEY not configured' });
 
   const systemPrompt = `You are an expert Agency CMBS trader. Parse the offer list and return ONLY valid JSON — no markdown, no extra text. Group every offer by agency: Fannie Mae (FNMA, Fannie, DUS, GeMS, ACES), Freddie Mac (FHLMC, Freddie, K-Series, SB, Q-Deal, PC), Ginnie Mae (GNMA, Ginnie, FHA, VA, HUD), Other. Return: {"groups":[{"agency":"Fannie Mae","offers":[{"name":"","collateral":"","structure":"","coupon":"","maturity":"","size":"","price":"","spread":"","rating":"","rate_type":"","notes":""}]}]}. Null for unknown. Extract EVERY offer.`;
