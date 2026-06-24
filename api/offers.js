@@ -32,7 +32,8 @@ module.exports = async (req, res) => {
   // GET — fetch offers
   if (req.method === 'GET') {
     const { date, from_date } = req.query || {};
-    let path = '/cmbs_offers?order=date.desc,id.asc&select=*';
+    const limit = req.query?.limit || '10000';
+    let path = `/cmbs_offers?order=date.desc,id.asc&select=*&limit=${limit}`;
     if (date) path += `&date=eq.${date}`;
     else if (from_date) path += `&date=gte.${from_date}`;
     const { status, data } = await sbFetch(path);

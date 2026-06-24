@@ -923,22 +923,29 @@ function renderHistory(){
   if(!historyLoaded){
     container.style.display='none';
     empty.style.display='block';
-    empty.innerHTML='Loading history...';
-    fetch('/api/offers').then(function(r){return r.json();}).then(function(data){
+    empty.innerHTML='<span style="color:var(--amb)">Loading history...</span>';
+    fetch('/api/offers?limit=10000').then(function(r){
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return r.json();
+    }).then(function(data){
       historyLoaded=true;
-      historyOffers=Array.isArray(data)?data:[];
+      if(!Array.isArray(data)){
+        empty.innerHTML='<span style="color:#e05050">DB error: '+(data&&data.error?data.error:JSON.stringify(data))+'</span>';
+        return;
+      }
+      historyOffers=data;
       var dates=new Set(historyOffers.map(function(o){return o.date;}));
       document.getElementById('stat-days').textContent=dates.size||'0';
       renderHistory();
-    }).catch(function(){
-      empty.innerHTML='Failed to load history.';
+    }).catch(function(e){
+      empty.innerHTML='<span style="color:#e05050">Failed to load history: '+e.message+'</span>';
     });
     return;
   }
 
   if(!historyOffers.length){
     empty.style.display='block';
-    empty.innerHTML='No history found.';
+    empty.innerHTML='No history found. Organize dealers and save to begin building history.<br><br><button onclick="historyLoaded=false;renderHistory()" style="background:var(--amb);color:#000;border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-family:inherit">Refresh</button>';
     container.style.display='none';
     container.innerHTML='';
     return;
