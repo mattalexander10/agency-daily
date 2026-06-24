@@ -382,13 +382,14 @@ function updateDateDisplay(){
 
 async function fetchDaysTracked(){
   try{
-    var r=await fetch('/api/offers');
+    var r=await fetch('/api/offers?limit=10000');
     if(!r.ok)return;
     var data=await r.json();
     if(!Array.isArray(data))return;
     var dates=new Set(data.map(function(o){return o.date;}));
     document.getElementById('stat-days').textContent=dates.size||'0';
     historyOffers=data;
+    historyLoaded=true;
   }catch(e){}
 }
 
